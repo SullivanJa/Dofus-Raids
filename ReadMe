@@ -1,0 +1,129 @@
+# Dofus Raids Bot
+
+Bot Discord de gestion de raids Dofus permettant de créer des raids, gérer les inscriptions, composer des rosters, suivre les absences et consulter l’historique de participation des joueurs.
+
+
+## Fonctionnalités
+
+* Création de raids Dofus en format 12 ou 16 places
+* Inscriptions via bouton
+* Gestion des absences
+* Gestion de profils joueurs avec personnages, classes, stuff
+* Proposition de plusieurs personnages par joueur
+* Sélection des personnages par les admins raid
+* Validation du roster final
+* Historique de participation par joueur
+* Consultation des rosters des raids terminés
+* Gestion des permissions admin par rôle Discord
+* Configuration d’un rôle à mentionner lors de la validation d’un roster
+* Isolation des raids par serveur Discord
+* Suppression des données utilisateur via commande dédiée
+
+
+## Commandes principales
+
+### Raids
+
+| Commande                  | Description                                    |
+| ------------------------- | ---------------------------------------------- |
+| `/raid_creer`             | Créer un raid                                  |
+| `/raid_liste`             | Lister les raids du serveur                    |
+| `/raid_inscrits`          | Voir les inscrits et leurs personnages         |
+| `/raid_selectionner`      | Sélectionner les personnages d’un membre       |
+| `/raid_retirer`           | Retirer un personnage du roster                |
+| `/raid_valider`           | Valider et publier le roster final             |
+| `/raid_participation`     | Voir l’historique de participation d’un membre |
+| `/all_raid_participation` | Voir le roster d’un raid terminé               |
+
+### Profils joueurs
+
+| Commande                        | Description                               |
+| ------------------------------- | ----------------------------------------- |
+| `/profil_mes_persos`            | Afficher ses personnages                  |
+| `/profil_ajouter_perso`         | Ajouter un personnage                     |
+| `/profil_supprimer_perso`       | Supprimer un personnage                   |
+| `/profil_supprimer_mes_donnees` | Supprimer toutes ses données enregistrées |
+
+### Administration des rôles
+
+| Commande                  | Description                         |
+| ------------------------- | ----------------------------------- |
+| `/raid_admin_role_add`    | Autoriser un rôle à gérer les raids |
+| `/raid_admin_role_remove` | Retirer un rôle des admins raid     |
+| `/raid_admin_role_list`   | Lister les rôles admins raid        |
+
+### Annonces
+
+| Commande                    | Description                                        |
+| --------------------------- | -------------------------------------------------- |
+| `/raid_annonce_role_set`    | Définir le rôle à mentionner lors d’une validation |
+| `/raid_annonce_role_remove` | Supprimer le rôle d’annonce                        |
+| `/raid_annonce_role_show`   | Voir le rôle d’annonce configuré                   |
+
+## Configuration des rôles admin
+
+Par défaut, les membres ayant la permission `Administrateur` ou `Gérer le serveur` peuvent configurer le bot.
+
+Pour autoriser un rôle à gérer les raids :
+
+```text
+/raid_admin_role_add role:@Raid Lead
+```
+
+Pour retirer ce rôle :
+
+```text
+/raid_admin_role_remove role:@Raid Lead
+```
+
+Pour afficher les rôles autorisés :
+
+```text
+/raid_admin_role_list
+```
+
+## Configuration du rôle d’annonce
+
+Le bot peut mentionner un rôle lors de la validation d’un roster final.
+
+Configurer le rôle :
+
+```text
+/raid_annonce_role_set role:@Raids
+```
+
+Voir le rôle configuré :
+
+```text
+/raid_annonce_role_show
+```
+
+Supprimer le rôle configuré :
+
+```text
+/raid_annonce_role_remove
+```
+
+## Données stockées
+
+Le bot utilise une base SQLite locale.
+
+Données pouvant être stockées :
+
+* ID Discord utilisateur
+* Pseudo Discord
+* ID du serveur Discord
+* Rôles admin configurés
+* Personnages Dofus
+* Classes et spécialisations
+* Statut de stuff
+* Inscriptions aux raids
+* Absences
+* Rosters validés
+* Historique de participation
+
+Les utilisateurs peuvent supprimer leurs données avec :
+
+```text
+/profil_supprimer_mes_donnees
+```
