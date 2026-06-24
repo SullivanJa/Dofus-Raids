@@ -127,3 +127,8 @@ Les utilisateurs peuvent supprimer leurs données avec :
 ```text
 /profil_supprimer_mes_donnees
 ```
+## Installer le bot sur son serveur
+
+copiez puis coller le lien ci-dessous dans votre navigateur :
+
+https://discord.com/oauth2/authorize?client_id=1518536965660606564&permissions=478208&integration_type=0&scope=bot+applications.commands
