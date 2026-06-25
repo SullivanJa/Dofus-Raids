@@ -101,7 +101,22 @@ def setup_database():
         validated_at TEXT
     )
     """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS raid_formats (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE,
+            places INTEGER NOT NULL
+        )
+        """)
+        cursor.execute("""
+        INSERT OR IGNORE INTO raid_formats (name, places)
+        VALUES ('Raid 12 places', 12)
+    """)
 
+    cursor.execute("""
+        INSERT OR IGNORE INTO raid_formats (name, places)
+        VALUES ('Raid 16 places', 16)
+    """)
     # Ancienne table conservée pour éviter de casser la base existante
     # Elle sert surtout à stocker présent/absent par raid et par utilisateur
     cursor.execute("""
@@ -430,6 +445,14 @@ def get_raid_data(raid_id: int, guild_id: int | None = None):
 
     return cursor.fetchone()
 
+def get_raid_format_by_name(name: str):
+    cursor.execute("""
+        SELECT name, places
+        FROM raid_formats
+        WHERE name = ?
+    """, (name,))
+
+    return cursor.fetchone()
 
 def get_character_rows_for_raid(raid_id: int, selected: int | None = None):
     selected_filter = ""
@@ -1043,9 +1066,9 @@ class CharacterOfferSelect(discord.ui.Select):
             )
 
         super().__init__(
-            placeholder="Choisis 1 ou 2 personnages à proposer",
+            placeholder="Choisis un ou plusieurs personnages à proposer",
             min_values=1,
-            max_values=min(2, len(options)),
+            max_values=len(options),
             options=options,
             custom_id=f"raid:{raid_id}:offer:{user_id}",
             row=0
@@ -1363,7 +1386,7 @@ class RaidView(discord.ui.View):
         action_text = "Modifie le(s) personnage(s) que tu veux inscrire." if signup_status == "present" else "Choisis avec quel(s) personnage(s) tu veux venir."
 
         await interaction.response.send_message(
-            f"{action_text} Tu peux en proposer **2 maximum**.",
+            f"{action_text} Tu peux proposer autant de personnages que tu veux.",
             view=CharacterOfferView(self.raid_id, interaction.user.id),
             ephemeral=True
         )
@@ -1540,6 +1563,31 @@ async def raid_autocomplete(
             break
 
     return choices
+
+async def raid_places_autocomplete(
+    interaction: discord.Interaction,
+    current: str
+) -> list[app_commands.Choice[str]]:
+    current = clean_one_line(current).lower()
+
+    cursor.execute("""
+        SELECT name, places
+        FROM raid_formats
+        WHERE LOWER(name) LIKE ?
+        ORDER BY places ASC, name ASC
+        LIMIT 25
+    """, (f"%{current}%",))
+
+    rows = cursor.fetchall()
+
+    return [
+        app_commands.Choice(
+            name=trim(f"{name} — {places} places", 100),
+            value=name
+        )
+        for name, places in rows
+    ]
+
 @bot.tree.command(name="raid_creer", description="Créer un raid Dofus")
 @app_commands.describe(
     nom="Nom du donjon, boss ou activité",
@@ -1547,36 +1595,31 @@ async def raid_autocomplete(
     objectif="Objectif du raid",
     places="Format du raid"
 )
-@app_commands.choices(places=[
-    app_commands.Choice(name="Raid 12 places", value=12),
-    app_commands.Choice(name="Raid 16 places", value=16),
-])
+@app_commands.autocomplete(places=raid_places_autocomplete)
 async def raid_creer(
     interaction: discord.Interaction,
     nom: str,
     date: str,
     objectif: str,
-    places: app_commands.Choice[int]
+    places: str
 ):
-    if not is_raid_admin(interaction):
-        await interaction.response.send_message("Tu n'as pas la permission.", ephemeral=True)
-        return
-    max_players = places.value
+    raid_format = get_raid_format_by_name(places)
 
-    if interaction.guild is None:
+    if not raid_format:
         await interaction.response.send_message(
-            "Commande utilisable uniquement sur un serveur.",
+            "Ce format de raid n'existe pas. Utilise `/ajouter_raid` pour l'ajouter d'abord.",
             ephemeral=True
         )
         return
 
+    format_name, max_players = raid_format
+
     cursor.execute("""
         INSERT INTO raids (
-            guild_id, nom, date_text, objectif, max_players, created_by
+            nom, date_text, objectif, max_players, created_by
         )
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?)
     """, (
-        interaction.guild.id,
         nom,
         date,
         objectif,
@@ -1606,6 +1649,68 @@ async def raid_creer(
 
     db.commit()
 
+@bot.tree.command(name="ajouter_raid", description="Ajouter un format de raid disponible dans /raid_creer")
+@app_commands.default_permissions(manage_guild=True)
+@app_commands.describe(
+    name="Nom du format affiché dans /raid_creer",
+    places="Nombre de places du raid"
+)
+async def ajouter_raid(
+    interaction: discord.Interaction,
+    name: str,
+    places: int
+):
+    if not is_raid_admin(interaction):
+        await interaction.response.send_message(
+            "Tu n'as pas la permission d'ajouter un format de raid.",
+            ephemeral=True
+        )
+        return
+
+    name = clean_one_line(name)
+
+    if not name:
+        await interaction.response.send_message(
+            "Le nom du format ne peut pas être vide.",
+            ephemeral=True
+        )
+        return
+
+    if len(name) > 80:
+        await interaction.response.send_message(
+            "Le nom du format est trop long. Mets 80 caractères maximum.",
+            ephemeral=True
+        )
+        return
+
+    if places <= 0:
+        await interaction.response.send_message(
+            "Le nombre de places doit être supérieur à 0.",
+            ephemeral=True
+        )
+        return
+
+    if places > 100:
+        await interaction.response.send_message(
+            "Le nombre de places est trop élevé. Mets 100 maximum.",
+            ephemeral=True
+        )
+        return
+
+    cursor.execute("""
+        INSERT INTO raid_formats (name, places)
+        VALUES (?, ?)
+        ON CONFLICT(name)
+        DO UPDATE SET places = excluded.places
+    """, (name, places))
+
+    db.commit()
+
+    await interaction.response.send_message(
+        f"✅ Format ajouté : **{name}** — **{places} places**.\n"
+        "Il apparaîtra maintenant dans l'option `places` de `/raid_creer`.",
+        ephemeral=True
+    )
 
 @bot.tree.command(name="raid_liste", description="Lister les raids Dofus prévus")
 async def raid_liste(interaction: discord.Interaction):
