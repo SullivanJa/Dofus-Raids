@@ -108,7 +108,7 @@ def setup_database():
             places INTEGER NOT NULL
         )
         """)
-        cursor.execute("""
+    cursor.execute("""
         INSERT OR IGNORE INTO raid_formats (name, places)
         VALUES ('Raid 12 places', 12)
     """)
