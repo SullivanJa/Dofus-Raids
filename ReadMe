@@ -2,14 +2,14 @@
 
 Bot Discord de gestion de raids Dofus permettant de créer des raids, gérer les inscriptions, composer des rosters, suivre les absences et consulter l’historique de participation des joueurs.
 
-
 ## Fonctionnalités
 
-* Création de raids Dofus en format 12 ou 16 places
+* Création de raids Dofus avec formats personnalisables
+* Ajout de formats de raid via `/ajouter_raid`
 * Inscriptions via bouton
 * Gestion des absences
 * Gestion de profils joueurs avec personnages, classes, stuff
-* Proposition de plusieurs personnages par joueur
+* Proposition de plusieurs personnages par joueur, sans limite de 2 personnages
 * Sélection des personnages par les admins raid
 * Validation du roster final
 * Historique de participation par joueur
@@ -19,14 +19,14 @@ Bot Discord de gestion de raids Dofus permettant de créer des raids, gérer les
 * Isolation des raids par serveur Discord
 * Suppression des données utilisateur via commande dédiée
 
-
 ## Commandes principales
 
 ### Raids
 
 | Commande                  | Description                                    |
 | ------------------------- | ---------------------------------------------- |
-| `/raid_creer`             | Créer un raid                                  |
+| `/creer_raid`             | Créer un raid                                  |
+| `/ajouter_raid`           | Ajouter ou modifier un format de raid          |
 | `/raid_liste`             | Lister les raids du serveur                    |
 | `/raid_inscrits`          | Voir les inscrits et leurs personnages         |
 | `/raid_selectionner`      | Sélectionner les personnages d’un membre       |
@@ -59,6 +59,26 @@ Bot Discord de gestion de raids Dofus permettant de créer des raids, gérer les
 | `/raid_annonce_role_set`    | Définir le rôle à mentionner lors d’une validation |
 | `/raid_annonce_role_remove` | Supprimer le rôle d’annonce                        |
 | `/raid_annonce_role_show`   | Voir le rôle d’annonce configuré                   |
+
+## Ajouter un format de raid
+
+Les formats de raid sont configurables avec la commande :
+
+```text
+/ajouter_raid
+```
+
+Exemple :
+
+```text
+/ajouter_raid name:Nidas places:8
+```
+
+Le format ajouté apparaîtra ensuite dans le champ `places` de la commande :
+
+```text
+/creer_raid
+```
 
 ## Configuration des rôles admin
 
@@ -127,8 +147,11 @@ Les utilisateurs peuvent supprimer leurs données avec :
 ```text
 /profil_supprimer_mes_donnees
 ```
+
 ## Installer le bot sur son serveur
 
-copiez puis coller le lien ci-dessous dans votre navigateur :
+Copiez puis collez le lien ci-dessous dans votre navigateur :
 
+```text
 https://discord.com/oauth2/authorize?client_id=1518536965660606564&permissions=478208&integration_type=0&scope=bot+applications.commands
+```
